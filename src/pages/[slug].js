@@ -1,13 +1,16 @@
 import { getAllAccounts, getSelectedAccount } from "@/api/services"
 import { Inter } from "next/font/google"
 import Image from "next/image"
-import NotFound from "./notFound";
+import NotFound from "./notFound"
+import { useRouter } from "next/router"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export default function SlugPage({ data }) {
+  const Router = useRouter()
   if (!data) {
-    return <NotFound/>
+    Router.push("/notFound")
+    return null
   }
   return (
     <main
@@ -77,16 +80,25 @@ export async function getStaticPaths() {
     }
   })
 
-  return { paths, fallback: 'blocking' }
+  return { paths, fallback: "blocking" }
 }
 
 export async function getStaticProps({ params }) {
   const selectedAccount = await getSelectedAccount(params.slug)
 
+  if (!selectedAccount.data.data[0]) {
     return {
-      props: {
-        data: selectedAccount.data.data[0] || null,
+      redirect: {
+        destination: "/notFound",
+        permanent: false,
       },
-      revalidate: 10,
-    } 
+    }
+  }
+
+  return {
+    props: {
+      data: selectedAccount.data.data[0],
+    },
+    revalidate: 10,
+  }
 }
